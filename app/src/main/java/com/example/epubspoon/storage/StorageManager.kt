@@ -83,6 +83,16 @@ class StorageManager(private val context: Context) {
         return prefs.getString("current_book_md5", null)
     }
 
+    // ==================== 列表显示设置 ====================
+
+    fun saveDetailMode(detailed: Boolean) {
+        prefs.edit().putBoolean("list_detail_mode", detailed).apply()
+    }
+
+    fun isDetailMode(): Boolean {
+        return prefs.getBoolean("list_detail_mode", false)
+    }
+
     // ==================== MD5 工具 ====================
 
     companion object {

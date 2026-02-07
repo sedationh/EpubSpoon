@@ -25,6 +25,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.epubspoon.R
 import com.example.epubspoon.databinding.ActivityMainBinding
 import com.example.epubspoon.service.FloatingService
+import com.example.epubspoon.storage.StorageManager
 import com.example.epubspoon.viewmodel.MainViewModel
 import com.example.epubspoon.viewmodel.UiState
 import kotlinx.coroutines.launch
@@ -34,6 +35,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private val viewModel: MainViewModel by viewModels()
     private lateinit var segmentAdapter: SegmentAdapter
+    private lateinit var storage: StorageManager
 
     private var instructionExpanded = false
     private var floatingServiceRunning = false
@@ -80,9 +82,16 @@ Keep this format consistent for every passage I send. No need to confirm or repe
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        storage = StorageManager(this)
+
         setupRecyclerView()
         setupListeners()
         observeState()
+
+        // 应用存储的详细/省略模式
+        val detailed = storage.isDetailMode()
+        segmentAdapter.setDetailMode(detailed)
+        binding.btnToggleDetail.text = if (detailed) "省略" else "详细"
     }
 
     private fun setupRecyclerView() {
@@ -156,6 +165,14 @@ Keep this format consistent for every passage I send. No need to confirm or repe
         // 重新导入
         binding.btnReimport.setOnClickListener {
             openDocumentLauncher.launch(arrayOf("application/epub+zip"))
+        }
+
+        // 详细/省略切换
+        binding.btnToggleDetail.setOnClickListener {
+            val newMode = !storage.isDetailMode()
+            storage.saveDetailMode(newMode)
+            segmentAdapter.setDetailMode(newMode)
+            binding.btnToggleDetail.text = if (newMode) "省略" else "详细"
         }
 
         // 展开/折叠母指令

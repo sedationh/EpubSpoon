@@ -14,11 +14,19 @@ class SegmentAdapter(
 
     private var segments: List<String> = emptyList()
     private var currentIndex: Int = 0
+    private var detailed: Boolean = false
 
     fun updateData(segments: List<String>, currentIndex: Int) {
         this.segments = segments
         this.currentIndex = currentIndex
         notifyDataSetChanged()
+    }
+
+    fun setDetailMode(detailed: Boolean) {
+        if (this.detailed != detailed) {
+            this.detailed = detailed
+            notifyDataSetChanged()
+        }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -29,10 +37,11 @@ class SegmentAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val text = segments[position]
-        val preview = if (text.length > 50) text.substring(0, 50) + "…" else text
+        val preview = if (detailed) text else (if (text.length > 50) text.substring(0, 50) + "…" else text)
 
         holder.tvIndex.text = "${position + 1}"
         holder.tvPreview.text = preview
+        holder.tvPreview.maxLines = if (detailed) Int.MAX_VALUE else 2
 
         // 当前段高亮
         if (position == currentIndex) {
