@@ -172,6 +172,13 @@ Keep this format consistent for every passage I send. No need to confirm or repe
         }
 
         // 搜索/跳转
+        binding.etSearch.setOnClickListener {
+            binding.etSearch.isFocusable = true
+            binding.etSearch.isFocusableInTouchMode = true
+            binding.etSearch.requestFocus()
+            val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+            imm.showSoftInput(binding.etSearch, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT)
+        }
         binding.btnSearch.setOnClickListener { performSearch() }
         binding.etSearch.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH) {

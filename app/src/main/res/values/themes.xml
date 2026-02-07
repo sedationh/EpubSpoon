@@ -7,5 +7,6 @@
         <item name="colorSecondaryVariant">#FF333333</item>
         <item name="colorOnSecondary">@color/white</item>
         <item name="android:statusBarColor">#FF222222</item>
+        <item name="android:navigationBarColor">#FF222222</item>
     </style>
 </resources>

@@ -3,7 +3,10 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#FFFFFFFF">
+    android:background="#FFFFFFFF"
+    android:fitsSystemWindows="true"
+    android:focusable="true"
+    android:focusableInTouchMode="true">
 
     <!-- Toolbar -->
     <androidx.appcompat.widget.Toolbar
@@ -175,7 +178,8 @@
             android:background="@android:drawable/editbox_background"
             android:singleLine="true"
             android:imeOptions="actionSearch"
-            android:inputType="text" />
+            android:inputType="text"
+            android:focusable="false" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnSearch"
