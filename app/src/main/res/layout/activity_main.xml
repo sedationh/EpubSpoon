@@ -162,6 +162,14 @@
         android:layout_marginTop="8dp"
         android:visibility="gone" />
 
+    <!-- 启动悬浮窗按钮 -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnStartFloat"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="启动悬浮窗"
+        android:visibility="gone" />
+
     <!-- 关闭悬浮窗按钮 -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnStopFloat"

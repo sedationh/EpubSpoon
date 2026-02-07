@@ -14,6 +14,7 @@ import android.graphics.PixelFormat
 import android.os.IBinder
 import android.os.VibrationEffect
 import android.os.Vibrator
+import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.MotionEvent
@@ -50,6 +51,7 @@ class FloatingService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        Log.d("EpubSpoon", "FloatingService onStartCommand called")
         // 启动前台通知
         try {
             val notification = Notification.Builder(this, CHANNEL_ID)
@@ -67,9 +69,12 @@ class FloatingService : Service() {
                 startForeground(NOTIFICATION_ID, notification)
             }
         } catch (e: Exception) {
+            Log.e("EpubSpoon", "Failed to start foreground", e)
             stopSelf()
             return START_NOT_STICKY
         }
+
+        Log.d("EpubSpoon", "Foreground started OK")
 
         // 读取数据
         md5 = intent?.getStringExtra("md5") ?: ""
@@ -88,7 +93,9 @@ class FloatingService : Service() {
         currentIndex = storage.loadProgress(md5)
 
         // 创建悬浮窗
+        Log.d("EpubSpoon", "About to setupFloatingView, segments=${segments.size}, index=$currentIndex")
         setupFloatingView()
+        Log.d("EpubSpoon", "FloatingView added to WindowManager")
 
         return START_NOT_STICKY
     }

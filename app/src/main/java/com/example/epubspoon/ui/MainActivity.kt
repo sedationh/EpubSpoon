@@ -37,7 +37,6 @@ class MainActivity : AppCompatActivity() {
 
     private var instructionExpanded = false
     private var floatingServiceRunning = false
-    private var shouldAutoStartFloat = false
 
     private val defaultInstruction = """
 You are my English reading assistant. I will send you passages from an English book one at a time. For each passage, please respond in the following format:
@@ -63,7 +62,6 @@ Keep this format consistent for every passage I send. No need to confirm or repe
         uri?.let {
             // 获取持久化权限
             contentResolver.takePersistableUriPermission(it, Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            shouldAutoStartFloat = true
             viewModel.importBook(it)
         }
     }
@@ -121,11 +119,17 @@ Keep this format consistent for every passage I send. No need to confirm or repe
             Toast.makeText(this, "已复制母指令", Toast.LENGTH_SHORT).show()
         }
 
+        // 启动悬浮窗
+        binding.btnStartFloat.setOnClickListener {
+            checkAndStartFloatingService()
+        }
+
         // 关闭悬浮窗
         binding.btnStopFloat.setOnClickListener {
             stopService(Intent(this, FloatingService::class.java))
             floatingServiceRunning = false
             binding.btnStopFloat.visibility = View.GONE
+            binding.btnStartFloat.visibility = View.VISIBLE
         }
     }
 
@@ -150,6 +154,7 @@ Keep this format consistent for every passage I send. No need to confirm or repe
         binding.progressBar.visibility = View.GONE
         binding.cardInstruction.visibility = View.GONE
         binding.rvSegments.visibility = View.GONE
+        binding.btnStartFloat.visibility = View.GONE
         binding.btnStopFloat.visibility = View.GONE
     }
 
@@ -159,6 +164,7 @@ Keep this format consistent for every passage I send. No need to confirm or repe
         binding.progressBar.visibility = View.VISIBLE
         binding.cardInstruction.visibility = View.GONE
         binding.rvSegments.visibility = View.GONE
+        binding.btnStartFloat.visibility = View.GONE
         binding.btnStopFloat.visibility = View.GONE
     }
 
@@ -183,10 +189,13 @@ Keep this format consistent for every passage I send. No need to confirm or repe
         // 自动滚动到当前段
         binding.rvSegments.scrollToPosition(state.currentIndex)
 
-        // 仅导入时自动启动悬浮窗（恢复状态不自动启动）
-        if (shouldAutoStartFloat) {
-            shouldAutoStartFloat = false
-            checkAndStartFloatingService()
+        // 显示启动/关闭悬浮窗按钮
+        if (floatingServiceRunning) {
+            binding.btnStartFloat.visibility = View.GONE
+            binding.btnStopFloat.visibility = View.VISIBLE
+        } else {
+            binding.btnStartFloat.visibility = View.VISIBLE
+            binding.btnStopFloat.visibility = View.GONE
         }
     }
 
@@ -196,6 +205,7 @@ Keep this format consistent for every passage I send. No need to confirm or repe
         binding.progressBar.visibility = View.GONE
         binding.cardInstruction.visibility = View.GONE
         binding.rvSegments.visibility = View.GONE
+        binding.btnStartFloat.visibility = View.GONE
         binding.btnStopFloat.visibility = View.GONE
         Toast.makeText(this, message, Toast.LENGTH_LONG).show()
     }
@@ -244,6 +254,7 @@ Keep this format consistent for every passage I send. No need to confirm or repe
             }
             startForegroundService(intent)
             floatingServiceRunning = true
+            binding.btnStartFloat.visibility = View.GONE
             binding.btnStopFloat.visibility = View.VISIBLE
         } catch (e: Exception) {
             Log.e("EpubSpoon", "Failed to start floating service", e)
@@ -256,11 +267,7 @@ Keep this format consistent for every passage I send. No need to confirm or repe
         clipboard.setPrimaryClip(ClipData.newPlainText("EpubSpoon", text))
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        stopService(Intent(this, FloatingService::class.java))
-        floatingServiceRunning = false
-    }
+    // 不在 onDestroy 停止服务，让悬浮窗在 Activity 销毁后继续运行
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
