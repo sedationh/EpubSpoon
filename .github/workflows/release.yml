@@ -40,8 +40,8 @@ jobs:
 
       - name: Rename APK
         run: |
-          mv app/build/outputs/apk/release/app-release-unsigned.apk \
-             app/build/outputs/apk/release/EpubSpoon-${{ steps.version.outputs.VERSION }}.apk
+          APK=$(find app/build/outputs/apk/release -name '*.apk' | head -1)
+          mv "$APK" app/build/outputs/apk/release/EpubSpoon-${{ steps.version.outputs.VERSION }}.apk
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
