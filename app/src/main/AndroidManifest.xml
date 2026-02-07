@@ -5,6 +5,8 @@
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <!-- 前台 Service -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <!-- 通知权限 (Android 13+) -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- 震动反馈 -->
     <uses-permission android:name="android.permission.VIBRATE" />
 

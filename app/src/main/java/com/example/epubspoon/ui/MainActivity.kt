@@ -4,15 +4,20 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -32,6 +37,7 @@ class MainActivity : AppCompatActivity() {
 
     private var instructionExpanded = false
     private var floatingServiceRunning = false
+    private var shouldAutoStartFloat = false
 
     private val defaultInstruction = """
 You are my English reading assistant. I will send you passages from an English book one at a time. For each passage, please respond in the following format:
@@ -57,6 +63,7 @@ Keep this format consistent for every passage I send. No need to confirm or repe
         uri?.let {
             // 获取持久化权限
             contentResolver.takePersistableUriPermission(it, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            shouldAutoStartFloat = true
             viewModel.importBook(it)
         }
     }
@@ -176,8 +183,11 @@ Keep this format consistent for every passage I send. No need to confirm or repe
         // 自动滚动到当前段
         binding.rvSegments.scrollToPosition(state.currentIndex)
 
-        // 自动启动悬浮窗
-        checkAndStartFloatingService()
+        // 仅导入时自动启动悬浮窗（恢复状态不自动启动）
+        if (shouldAutoStartFloat) {
+            shouldAutoStartFloat = false
+            checkAndStartFloatingService()
+        }
     }
 
     private fun showErrorState(message: String) {
@@ -214,12 +224,31 @@ Keep this format consistent for every passage I send. No need to confirm or repe
         val state = viewModel.uiState.value
         if (state !is UiState.Success) return
 
-        val intent = Intent(this, FloatingService::class.java).apply {
-            putExtra("md5", state.md5)
+        // Android 13+ 需要通知权限
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED
+            ) {
+                ActivityCompat.requestPermissions(
+                    this,
+                    arrayOf(android.Manifest.permission.POST_NOTIFICATIONS),
+                    1001
+                )
+                return
+            }
         }
-        startForegroundService(intent)
-        floatingServiceRunning = true
-        binding.btnStopFloat.visibility = View.VISIBLE
+
+        try {
+            val intent = Intent(this, FloatingService::class.java).apply {
+                putExtra("md5", state.md5)
+            }
+            startForegroundService(intent)
+            floatingServiceRunning = true
+            binding.btnStopFloat.visibility = View.VISIBLE
+        } catch (e: Exception) {
+            Log.e("EpubSpoon", "Failed to start floating service", e)
+            Toast.makeText(this, "悬浮窗启动失败", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun copyToClipboard(text: String) {
@@ -231,5 +260,12 @@ Keep this format consistent for every passage I send. No need to confirm or repe
         super.onDestroy()
         stopService(Intent(this, FloatingService::class.java))
         floatingServiceRunning = false
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == 1001 && grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            startFloatingService()
+        }
     }
 }

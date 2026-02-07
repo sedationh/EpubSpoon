@@ -49,12 +49,17 @@ class FloatingService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         // 启动前台通知
-        val notification = Notification.Builder(this, CHANNEL_ID)
-            .setContentTitle("EpubSpoon")
-            .setContentText("悬浮窗运行中")
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
-            .build()
-        startForeground(NOTIFICATION_ID, notification)
+        try {
+            val notification = Notification.Builder(this, CHANNEL_ID)
+                .setContentTitle("EpubSpoon")
+                .setContentText("悬浮窗运行中")
+                .setSmallIcon(android.R.drawable.ic_dialog_info)
+                .build()
+            startForeground(NOTIFICATION_ID, notification)
+        } catch (e: Exception) {
+            stopSelf()
+            return START_NOT_STICKY
+        }
 
         // 读取数据
         md5 = intent?.getStringExtra("md5") ?: ""

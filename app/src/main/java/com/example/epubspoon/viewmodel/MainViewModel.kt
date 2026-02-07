@@ -135,9 +135,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
      * 恢复上次选中的书籍
      */
     private fun restoreLastBook() {
-        val md5 = storage.getCurrentBookMd5() ?: return
-        val cached = storage.loadSegmentsCache(md5) ?: return
-        val progress = storage.loadProgress(md5)
-        _uiState.value = UiState.Success(cached, progress, md5)
+        try {
+            val md5 = storage.getCurrentBookMd5() ?: return
+            val cached = storage.loadSegmentsCache(md5) ?: return
+            val progress = storage.loadProgress(md5)
+            _uiState.value = UiState.Success(cached, progress, md5)
+        } catch (_: Exception) {
+            // 缓存损坏，忽略
+        }
     }
 }
