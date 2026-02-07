@@ -132,6 +132,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     /**
+     * 清除当前书籍，回到空状态
+     */
+    fun clearBook() {
+        storage.clearCurrentBook()
+        _uiState.value = UiState.Idle
+    }
+
+    /**
      * 恢复上次选中的书籍
      */
     private fun restoreLastBook() {

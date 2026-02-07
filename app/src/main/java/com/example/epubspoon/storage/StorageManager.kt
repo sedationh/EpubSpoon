@@ -83,6 +83,13 @@ class StorageManager(private val context: Context) {
         return prefs.getString("current_book_md5", null)
     }
 
+    /**
+     * 清除当前书籍记录
+     */
+    fun clearCurrentBook() {
+        prefs.edit().remove("current_book_md5").apply()
+    }
+
     // ==================== 列表显示设置 ====================
 
     fun saveDetailMode(detailed: Boolean) {

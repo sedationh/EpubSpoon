@@ -212,6 +212,16 @@ Keep this format consistent for every passage I send. No need to confirm or repe
             openDocumentLauncher.launch(arrayOf("application/epub+zip"))
         }
 
+        // 清除当前书籍
+        binding.btnClear.setOnClickListener {
+            if (floatingServiceRunning) {
+                stopService(Intent(this, FloatingService::class.java))
+                floatingServiceRunning = false
+            }
+            viewModel.clearBook()
+            Toast.makeText(this, "已清除", Toast.LENGTH_SHORT).show()
+        }
+
         // 详细/省略切换
         binding.btnToggleDetail.setOnClickListener {
             val newMode = !storage.isDetailMode()
