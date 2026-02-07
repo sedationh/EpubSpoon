@@ -1,0 +1,62 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'  # 推送 v1.0.0, v1.2.3 等 tag 时触发
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Update versionName in build.gradle.kts
+        run: |
+          sed -i "s/versionName = \".*\"/versionName = \"${{ steps.version.outputs.VERSION }}\"/" app/build.gradle.kts
+
+      - name: Build Release APK
+        run: ./gradlew assembleRelease
+
+      - name: Rename APK
+        run: |
+          mv app/build/outputs/apk/release/app-release-unsigned.apk \
+             app/build/outputs/apk/release/EpubSpoon-${{ steps.version.outputs.VERSION }}.apk
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: EpubSpoon v${{ steps.version.outputs.VERSION }}
+          body: |
+            ## EpubSpoon v${{ steps.version.outputs.VERSION }}
+
+            ### 安装说明
+            1. 下载下方 APK 文件
+            2. 在 Android 设备上安装（需允许安装未知来源应用）
+            3. 打开 EpubSpoon，导入 EPUB 文件即可使用
+
+            > ⚠️ 此 APK 未签名，仅供测试使用。
+          files: |
+            app/build/outputs/apk/release/EpubSpoon-${{ steps.version.outputs.VERSION }}.apk
+          draft: false
+          prerelease: false
