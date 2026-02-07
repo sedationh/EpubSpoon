@@ -175,6 +175,12 @@ Keep this format consistent for every passage I send. No need to confirm or repe
             binding.btnToggleDetail.text = if (newMode) "省略" else "详细"
         }
 
+        // 搜索栏展开/收起
+        binding.btnToggleSearch.setOnClickListener {
+            val visible = binding.searchBar.visibility == View.VISIBLE
+            binding.searchBar.visibility = if (visible) View.GONE else View.VISIBLE
+        }
+
         // 展开/折叠母指令
         binding.btnToggleInstruction.setOnClickListener {
             instructionExpanded = !instructionExpanded
@@ -260,7 +266,7 @@ Keep this format consistent for every passage I send. No need to confirm or repe
         binding.progressBar.visibility = View.GONE
         binding.bookInfoArea.visibility = View.VISIBLE
         binding.cardInstruction.visibility = View.VISIBLE
-        binding.searchBar.visibility = View.VISIBLE
+        // searchBar 默认隐藏，用户点"搜索"按钮展开
         binding.rvSegments.visibility = View.VISIBLE
         binding.btnStopFloat.visibility = View.VISIBLE
 
