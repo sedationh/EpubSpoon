@@ -153,13 +153,46 @@
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
+    <!-- 搜索/跳转栏 -->
+    <LinearLayout
+        android:id="@+id/searchBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="8dp"
+        android:gravity="center_vertical"
+        android:visibility="gone">
+
+        <EditText
+            android:id="@+id/etSearch"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:hint="输入序号或关键词搜索"
+            android:textSize="14sp"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:background="@android:drawable/editbox_background"
+            android:singleLine="true"
+            android:imeOptions="actionSearch"
+            android:inputType="text" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSearch"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:text="跳转"
+            android:minWidth="60dp" />
+    </LinearLayout>
+
     <!-- 分段列表 -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvSegments"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="4dp"
         android:visibility="gone" />
 
     <!-- 启动悬浮窗按钮 -->

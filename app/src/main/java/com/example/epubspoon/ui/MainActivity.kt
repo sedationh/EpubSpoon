@@ -88,10 +88,62 @@ Keep this format consistent for every passage I send. No need to confirm or repe
     private fun setupRecyclerView() {
         segmentAdapter = SegmentAdapter { index ->
             viewModel.selectSegment(index)
+            // 如果悬浮窗正在运行，重启以同步进度
+            if (floatingServiceRunning) {
+                restartFloatingService()
+            }
         }
         binding.rvSegments.apply {
             layoutManager = LinearLayoutManager(this@MainActivity)
             adapter = segmentAdapter
+        }
+    }
+
+    private fun performSearch() {
+        val query = binding.etSearch.text.toString().trim()
+        if (query.isBlank()) return
+
+        val state = viewModel.uiState.value
+        if (state !is UiState.Success) return
+
+        // 先尝试当作序号
+        val asNumber = query.toIntOrNull()
+        if (asNumber != null) {
+            val targetIndex = (asNumber - 1).coerceIn(0, state.bookData.segments.size - 1)
+            viewModel.selectSegment(targetIndex)
+            binding.rvSegments.scrollToPosition(targetIndex)
+            if (floatingServiceRunning) restartFloatingService()
+            Toast.makeText(this, "已跳转到第 ${targetIndex + 1} 段", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        // 关键词搜索：从当前位置往后找
+        val segments = state.bookData.segments
+        val startFrom = state.currentIndex + 1
+        for (i in segments.indices) {
+            val idx = (startFrom + i) % segments.size
+            if (segments[idx].contains(query, ignoreCase = true)) {
+                viewModel.selectSegment(idx)
+                binding.rvSegments.scrollToPosition(idx)
+                if (floatingServiceRunning) restartFloatingService()
+                Toast.makeText(this, "找到：第 ${idx + 1} 段", Toast.LENGTH_SHORT).show()
+                return
+            }
+        }
+
+        Toast.makeText(this, "未找到 \"$query\"", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun restartFloatingService() {
+        val state = viewModel.uiState.value
+        if (state !is UiState.Success) return
+        try {
+            val intent = Intent(this, FloatingService::class.java).apply {
+                putExtra("md5", state.md5)
+            }
+            startForegroundService(intent)
+        } catch (e: Exception) {
+            Log.e("EpubSpoon", "Failed to restart floating service", e)
         }
     }
 
@@ -117,6 +169,15 @@ Keep this format consistent for every passage I send. No need to confirm or repe
             val text = binding.etInstruction.text.toString().ifBlank { defaultInstruction }
             copyToClipboard(text)
             Toast.makeText(this, "已复制母指令", Toast.LENGTH_SHORT).show()
+        }
+
+        // 搜索/跳转
+        binding.btnSearch.setOnClickListener { performSearch() }
+        binding.etSearch.setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH) {
+                performSearch()
+                true
+            } else false
         }
 
         // 启动悬浮窗
@@ -153,6 +214,7 @@ Keep this format consistent for every passage I send. No need to confirm or repe
         binding.bookInfoArea.visibility = View.GONE
         binding.progressBar.visibility = View.GONE
         binding.cardInstruction.visibility = View.GONE
+        binding.searchBar.visibility = View.GONE
         binding.rvSegments.visibility = View.GONE
         binding.btnStartFloat.visibility = View.GONE
         binding.btnStopFloat.visibility = View.GONE
@@ -163,6 +225,7 @@ Keep this format consistent for every passage I send. No need to confirm or repe
         binding.bookInfoArea.visibility = View.GONE
         binding.progressBar.visibility = View.VISIBLE
         binding.cardInstruction.visibility = View.GONE
+        binding.searchBar.visibility = View.GONE
         binding.rvSegments.visibility = View.GONE
         binding.btnStartFloat.visibility = View.GONE
         binding.btnStopFloat.visibility = View.GONE
@@ -173,6 +236,7 @@ Keep this format consistent for every passage I send. No need to confirm or repe
         binding.progressBar.visibility = View.GONE
         binding.bookInfoArea.visibility = View.VISIBLE
         binding.cardInstruction.visibility = View.VISIBLE
+        binding.searchBar.visibility = View.VISIBLE
         binding.rvSegments.visibility = View.VISIBLE
         binding.btnStopFloat.visibility = View.VISIBLE
 
@@ -204,6 +268,7 @@ Keep this format consistent for every passage I send. No need to confirm or repe
         binding.bookInfoArea.visibility = View.GONE
         binding.progressBar.visibility = View.GONE
         binding.cardInstruction.visibility = View.GONE
+        binding.searchBar.visibility = View.GONE
         binding.rvSegments.visibility = View.GONE
         binding.btnStartFloat.visibility = View.GONE
         binding.btnStopFloat.visibility = View.GONE
