@@ -36,11 +36,13 @@ class SegmentAdapter(
 
         // 当前段高亮
         if (position == currentIndex) {
-            holder.itemView.setBackgroundColor(Color.parseColor("#E3F2FD"))
-            holder.tvIndex.setTextColor(Color.parseColor("#1976D2"))
+            holder.itemView.setBackgroundColor(Color.parseColor("#F0F0F0"))
+            holder.tvIndex.setTextColor(Color.parseColor("#000000"))
+            holder.tvPreview.setTextColor(Color.parseColor("#000000"))
         } else {
             holder.itemView.setBackgroundColor(Color.TRANSPARENT)
             holder.tvIndex.setTextColor(Color.parseColor("#999999"))
+            holder.tvPreview.setTextColor(Color.parseColor("#333333"))
         }
 
         holder.itemView.setOnClickListener { onItemClick(position) }

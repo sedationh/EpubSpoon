@@ -31,6 +31,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var segmentAdapter: SegmentAdapter
 
     private var instructionExpanded = false
+    private var floatingServiceRunning = false
 
     private val defaultInstruction = """
 You are my English reading assistant. I will send you passages from an English book one at a time. For each passage, please respond in the following format:
@@ -116,6 +117,7 @@ Keep this format consistent for every passage I send. No need to confirm or repe
         // 关闭悬浮窗
         binding.btnStopFloat.setOnClickListener {
             stopService(Intent(this, FloatingService::class.java))
+            floatingServiceRunning = false
             binding.btnStopFloat.visibility = View.GONE
         }
     }
@@ -189,6 +191,7 @@ Keep this format consistent for every passage I send. No need to confirm or repe
     }
 
     private fun checkAndStartFloatingService() {
+        if (floatingServiceRunning) return
         if (Settings.canDrawOverlays(this)) {
             startFloatingService()
         } else {
@@ -215,6 +218,7 @@ Keep this format consistent for every passage I send. No need to confirm or repe
             putExtra("md5", state.md5)
         }
         startForegroundService(intent)
+        floatingServiceRunning = true
         binding.btnStopFloat.visibility = View.VISIBLE
     }
 
@@ -226,5 +230,6 @@ Keep this format consistent for every passage I send. No need to confirm or repe
     override fun onDestroy() {
         super.onDestroy()
         stopService(Intent(this, FloatingService::class.java))
+        floatingServiceRunning = false
     }
 }
