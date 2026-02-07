@@ -117,6 +117,26 @@ Keep this format consistent for every passage I send. No need to confirm or repe
         val detailed = storage.isDetailMode()
         segmentAdapter.setDetailMode(detailed)
         binding.btnToggleDetail.text = if (detailed) "省略" else "详细"
+
+        // 处理从外部打开的 EPUB 文件（Google Drive、文件管理器等）
+        handleIncomingIntent(intent)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleIncomingIntent(intent)
+    }
+
+    private fun handleIncomingIntent(intent: Intent?) {
+        if (intent?.action == Intent.ACTION_VIEW) {
+            intent.data?.let { uri ->
+                // 尝试获取持久化权限（部分来源可能不支持）
+                try {
+                    contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                } catch (_: Exception) {}
+                viewModel.importBook(uri)
+            }
+        }
     }
 
     private fun setupRecyclerView() {
