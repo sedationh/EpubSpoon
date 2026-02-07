@@ -1,0 +1,193 @@
+package com.example.epubspoon.service
+
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.Service
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.content.Intent
+import android.graphics.PixelFormat
+import android.os.IBinder
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.view.Gravity
+import android.view.LayoutInflater
+import android.view.MotionEvent
+import android.view.View
+import android.view.WindowManager
+import android.widget.TextView
+import android.widget.Toast
+import com.example.epubspoon.R
+import com.example.epubspoon.model.BookData
+import com.example.epubspoon.storage.StorageManager
+
+class FloatingService : Service() {
+
+    private lateinit var windowManager: WindowManager
+    private lateinit var floatingView: View
+    private lateinit var storage: StorageManager
+
+    private var md5: String = ""
+    private var segments: List<String> = emptyList()
+    private var currentIndex: Int = 0
+
+    companion object {
+        private const val CHANNEL_ID = "epubspoon_floating"
+        private const val NOTIFICATION_ID = 1
+    }
+
+    override fun onBind(intent: Intent?): IBinder? = null
+
+    override fun onCreate() {
+        super.onCreate()
+        windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
+        storage = StorageManager(this)
+        createNotificationChannel()
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // 启动前台通知
+        val notification = Notification.Builder(this, CHANNEL_ID)
+            .setContentTitle("EpubSpoon")
+            .setContentText("悬浮窗运行中")
+            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .build()
+        startForeground(NOTIFICATION_ID, notification)
+
+        // 读取数据
+        md5 = intent?.getStringExtra("md5") ?: ""
+        if (md5.isBlank()) {
+            stopSelf()
+            return START_NOT_STICKY
+        }
+
+        val bookData = storage.loadSegmentsCache(md5)
+        if (bookData == null) {
+            stopSelf()
+            return START_NOT_STICKY
+        }
+
+        segments = bookData.segments
+        currentIndex = storage.loadProgress(md5)
+
+        // 创建悬浮窗
+        setupFloatingView()
+
+        return START_NOT_STICKY
+    }
+
+    private fun setupFloatingView() {
+        // 如果已有悬浮窗，先移除
+        if (::floatingView.isInitialized) {
+            try { windowManager.removeView(floatingView) } catch (_: Exception) {}
+        }
+
+        floatingView = LayoutInflater.from(this).inflate(R.layout.layout_floating_button, null)
+        updateProgressText()
+
+        val params = WindowManager.LayoutParams(
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+            PixelFormat.TRANSLUCENT
+        ).apply {
+            gravity = Gravity.TOP or Gravity.START
+            x = 100
+            y = 300
+        }
+
+        // 拖拽 + 点击处理
+        var initialX = 0
+        var initialY = 0
+        var initialTouchX = 0f
+        var initialTouchY = 0f
+        var isDragging = false
+
+        floatingView.setOnTouchListener { _, event ->
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    initialX = params.x
+                    initialY = params.y
+                    initialTouchX = event.rawX
+                    initialTouchY = event.rawY
+                    isDragging = false
+                    true
+                }
+                MotionEvent.ACTION_MOVE -> {
+                    val dx = event.rawX - initialTouchX
+                    val dy = event.rawY - initialTouchY
+                    if (dx * dx + dy * dy > 100) { // 移动超过 10px 判定为拖拽
+                        isDragging = true
+                    }
+                    params.x = initialX + dx.toInt()
+                    params.y = initialY + dy.toInt()
+                    windowManager.updateViewLayout(floatingView, params)
+                    true
+                }
+                MotionEvent.ACTION_UP -> {
+                    if (!isDragging) {
+                        onFloatingClick()
+                    }
+                    true
+                }
+                else -> false
+            }
+        }
+
+        windowManager.addView(floatingView, params)
+    }
+
+    private fun onFloatingClick() {
+        if (segments.isEmpty()) return
+
+        if (currentIndex >= segments.size) {
+            Toast.makeText(this, "已是最后一段", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        // 1. 复制当前段到剪贴板
+        val text = segments[currentIndex]
+        val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        clipboard.setPrimaryClip(ClipData.newPlainText("EpubSpoon", text))
+
+        // 2. 震动反馈
+        val vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+        vibrator.vibrate(VibrationEffect.createOneShot(50, VibrationEffect.DEFAULT_AMPLITUDE))
+
+        // 3. 前进到下一段
+        if (currentIndex < segments.size - 1) {
+            currentIndex++
+            storage.saveProgress(md5, currentIndex)
+            updateProgressText()
+        } else {
+            Toast.makeText(this, "已是最后一段", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun updateProgressText() {
+        val tv = floatingView.findViewById<TextView>(R.id.tvFloatingProgress)
+        tv.text = "${currentIndex + 1}/${segments.size}"
+    }
+
+    private fun createNotificationChannel() {
+        val channel = NotificationChannel(
+            CHANNEL_ID,
+            "EpubSpoon 悬浮窗",
+            NotificationManager.IMPORTANCE_LOW
+        ).apply {
+            description = "悬浮窗运行通知"
+        }
+        val manager = getSystemService(NotificationManager::class.java)
+        manager.createNotificationChannel(channel)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        if (::floatingView.isInitialized) {
+            try { windowManager.removeView(floatingView) } catch (_: Exception) {}
+        }
+    }
+}
