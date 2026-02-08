@@ -1,6 +1,7 @@
 package com.example.epubspoon.storage
 
 import android.content.Context
+import android.content.SharedPreferences
 import com.example.epubspoon.model.BookData
 import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
@@ -98,6 +99,16 @@ class StorageManager(private val context: Context) {
 
     fun isDetailMode(): Boolean {
         return prefs.getBoolean("list_detail_mode", false)
+    }
+
+    // ==================== 变化监听 ====================
+
+    fun registerChangeListener(listener: SharedPreferences.OnSharedPreferenceChangeListener) {
+        prefs.registerOnSharedPreferenceChangeListener(listener)
+    }
+
+    fun unregisterChangeListener(listener: SharedPreferences.OnSharedPreferenceChangeListener) {
+        prefs.unregisterOnSharedPreferenceChangeListener(listener)
     }
 
     // ==================== MD5 工具 ====================

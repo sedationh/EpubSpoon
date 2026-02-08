@@ -11,6 +11,7 @@ import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
 import android.view.View
+import android.widget.PopupMenu
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
@@ -132,6 +133,12 @@ Keep this format consistent for every passage I send. No need to confirm or repe
         handleIncomingIntent(intent)
     }
 
+    override fun onResume() {
+        super.onResume()
+        // 从 storage 同步进度（悬浮窗可能已修改）
+        viewModel.syncProgress()
+    }
+
     private fun handleIncomingIntent(intent: Intent?) {
         if (intent?.action == Intent.ACTION_VIEW) {
             intent.data?.let { uri ->
@@ -217,19 +224,9 @@ Keep this format consistent for every passage I send. No need to confirm or repe
             openDocumentLauncher.launch(arrayOf("application/epub+zip"))
         }
 
-        // 重新导入
-        binding.btnReimport.setOnClickListener {
-            openDocumentLauncher.launch(arrayOf("application/epub+zip"))
-        }
-
-        // 清除当前书籍
-        binding.btnClear.setOnClickListener {
-            if (floatingServiceRunning) {
-                stopService(Intent(this, FloatingService::class.java))
-                floatingServiceRunning = false
-            }
-            viewModel.clearBook()
-            Toast.makeText(this, "已清除", Toast.LENGTH_SHORT).show()
+        // 更多菜单
+        binding.btnMore.setOnClickListener { view ->
+            showMoreMenu(view)
         }
 
         // 详细/省略切换
@@ -273,11 +270,6 @@ Keep this format consistent for every passage I send. No need to confirm or repe
                 performSearch()
                 true
             } else false
-        }
-
-        // 复制上下文（第1段到当前段，每段带序号）
-        binding.btnCopyContext.setOnClickListener {
-            copyContextSegments()
         }
 
         // 启动悬浮窗
@@ -457,6 +449,34 @@ Keep this format consistent for every passage I send. No need to confirm or repe
                 Toast.makeText(this@MainActivity, "当前已是最新版本 v${result.currentVersion}", Toast.LENGTH_SHORT).show()
             }
         }
+    }
+
+    private fun showMoreMenu(anchor: View) {
+        val popup = PopupMenu(this, anchor)
+        popup.menuInflater.inflate(R.menu.menu_more, popup.menu)
+        popup.setOnMenuItemClickListener { item ->
+            when (item.itemId) {
+                R.id.action_reimport -> {
+                    openDocumentLauncher.launch(arrayOf("application/epub+zip"))
+                    true
+                }
+                R.id.action_copy_context -> {
+                    copyContextSegments()
+                    true
+                }
+                R.id.action_clear -> {
+                    if (floatingServiceRunning) {
+                        stopService(Intent(this, FloatingService::class.java))
+                        floatingServiceRunning = false
+                    }
+                    viewModel.clearBook()
+                    Toast.makeText(this, "已清除", Toast.LENGTH_SHORT).show()
+                    true
+                }
+                else -> false
+            }
+        }
+        popup.show()
     }
 
     private fun copyContextSegments() {

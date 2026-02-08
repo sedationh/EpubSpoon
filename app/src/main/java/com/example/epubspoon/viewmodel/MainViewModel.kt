@@ -9,6 +9,7 @@ import com.example.epubspoon.parser.EpubParser
 import com.example.epubspoon.parser.SegmentHelper
 import com.example.epubspoon.storage.StorageManager
 import kotlinx.coroutines.Dispatchers
+import android.content.SharedPreferences
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,9 +23,31 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _uiState = MutableStateFlow<UiState>(UiState.Idle)
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
 
+    /**
+     * 监听 SharedPreferences 变化，悬浮窗写入进度时实时同步到 UI
+     */
+    private val prefsListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+        if (key != null && key.startsWith("progress_")) {
+            val state = _uiState.value
+            if (state is UiState.Success && key == "progress_${state.md5}") {
+                val newIndex = storage.loadProgress(state.md5)
+                if (newIndex != state.currentIndex) {
+                    _uiState.value = state.copy(currentIndex = newIndex)
+                }
+            }
+        }
+    }
+
     init {
         // App 启动时尝试恢复上次选中的书籍
         restoreLastBook()
+        // 注册进度变化监听
+        storage.registerChangeListener(prefsListener)
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        storage.unregisterChangeListener(prefsListener)
     }
 
     /**
@@ -129,6 +152,19 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val state = _uiState.value
         if (state !is UiState.Success) return true
         return state.currentIndex >= state.bookData.segments.size - 1
+    }
+
+    /**
+     * 从 storage 同步进度（悬浮窗可能已修改）
+     */
+    fun syncProgress() {
+        val state = _uiState.value
+        if (state is UiState.Success) {
+            val savedProgress = storage.loadProgress(state.md5)
+            if (savedProgress != state.currentIndex) {
+                _uiState.value = state.copy(currentIndex = savedProgress)
+            }
+        }
     }
 
     /**

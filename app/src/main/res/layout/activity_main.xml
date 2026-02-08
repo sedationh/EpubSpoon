@@ -108,21 +108,6 @@
         </LinearLayout>
 
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnReimport"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="重新导入" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnClear"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="清除"
-            android:textColor="#FF999999" />
-
-        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnToggleDetail"
             style="@style/Widget.MaterialComponents.Button.TextButton"
             android:layout_width="wrap_content"
@@ -139,11 +124,11 @@
             android:minWidth="48dp" />
 
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnCopyContext"
+            android:id="@+id/btnMore"
             style="@style/Widget.MaterialComponents.Button.TextButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="上下文"
+            android:text="更多"
             android:minWidth="48dp" />
     </LinearLayout>
 
