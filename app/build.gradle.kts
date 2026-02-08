@@ -3,6 +3,38 @@ plugins {
     id("org.jetbrains.kotlin.android")
 }
 
+/**
+ * 从 git tag 提取版本号，统一 tag → versionName → BuildConfig.VERSION_NAME。
+ * - CI 由 tag 触发（如 v1.0.0），`git describe --tags --abbrev=0` 返回 "v1.0.0"
+ * - 本地开发如果没有 tag 就 fallback 到 "dev"
+ */
+fun gitVersionName(): String {
+    return try {
+        val process = ProcessBuilder("git", "describe", "--tags", "--abbrev=0")
+            .directory(rootDir)
+            .redirectErrorStream(true)
+            .start()
+        val tag = process.inputStream.bufferedReader().readText().trim()
+        process.waitFor()
+        if (process.exitValue() == 0 && tag.isNotEmpty()) tag.removePrefix("v") else "dev"
+    } catch (_: Exception) {
+        "dev"
+    }
+}
+
+/**
+ * 从版本字符串生成 versionCode。
+ * "1.0.0" → 1_00_00 = 10000, "1.2.3" → 10203, "dev" → 1
+ */
+fun gitVersionCode(): Int {
+    val name = gitVersionName()
+    if (name == "dev") return 1
+    val parts = name.split(".").map { it.toIntOrNull() ?: 0 }
+    return parts.getOrElse(0) { 0 } * 10000 +
+            parts.getOrElse(1) { 0 } * 100 +
+            parts.getOrElse(2) { 0 }
+}
+
 android {
     namespace = "com.example.epubspoon"
     compileSdk = 35
@@ -11,8 +43,8 @@ android {
         applicationId = "com.example.epubspoon"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = gitVersionCode()
+        versionName = gitVersionName()
     }
 
     buildTypes {
@@ -37,6 +69,7 @@ android {
 
     buildFeatures {
         viewBinding = true
+        buildConfig = true
     }
 }
 

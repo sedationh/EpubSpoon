@@ -31,10 +31,6 @@ jobs:
         id: version
         run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
 
-      - name: Update versionName in build.gradle.kts
-        run: |
-          sed -i "s/versionName = \".*\"/versionName = \"${{ steps.version.outputs.VERSION }}\"/" app/build.gradle.kts
-
       - name: Build Release APK
         run: ./gradlew assembleRelease
 

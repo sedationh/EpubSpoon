@@ -22,10 +22,12 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.epubspoon.BuildConfig
 import com.example.epubspoon.R
 import com.example.epubspoon.databinding.ActivityMainBinding
 import com.example.epubspoon.service.FloatingService
 import com.example.epubspoon.storage.StorageManager
+import com.example.epubspoon.updater.UpdateChecker
 import com.example.epubspoon.viewmodel.MainViewModel
 import com.example.epubspoon.viewmodel.UiState
 import kotlinx.coroutines.launch
@@ -108,6 +110,9 @@ Keep this format consistent for every passage I send. No need to confirm or repe
         setContentView(binding.root)
 
         storage = StorageManager(this)
+
+        // 显示当前版本号
+        binding.tvVersion.text = "v${BuildConfig.VERSION_NAME}"
 
         setupRecyclerView()
         setupListeners()
@@ -202,6 +207,11 @@ Keep this format consistent for every passage I send. No need to confirm or repe
     }
 
     private fun setupListeners() {
+        // 检查更新
+        binding.btnCheckUpdate.setOnClickListener {
+            checkForUpdate()
+        }
+
         // 导入按钮
         binding.btnImport.setOnClickListener {
             openDocumentLauncher.launch(arrayOf("application/epub+zip"))
@@ -409,6 +419,38 @@ Keep this format consistent for every passage I send. No need to confirm or repe
         } catch (e: Exception) {
             Log.e("EpubSpoon", "Failed to start floating service", e)
             Toast.makeText(this, "悬浮窗启动失败", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun checkForUpdate() {
+        Toast.makeText(this, "正在检查更新…", Toast.LENGTH_SHORT).show()
+        lifecycleScope.launch {
+            val result = UpdateChecker.check(BuildConfig.VERSION_NAME)
+            if (result == null) {
+                Toast.makeText(this@MainActivity, "检查更新失败，请检查网络连接", Toast.LENGTH_SHORT).show()
+                return@launch
+            }
+            if (result.hasUpdate) {
+                AlertDialog.Builder(this@MainActivity)
+                    .setTitle("发现新版本 v${result.latestVersion}")
+                    .setMessage(
+                        buildString {
+                            append("当前版本：v${result.currentVersion}\n")
+                            append("最新版本：v${result.latestVersion}\n\n")
+                            if (result.releaseNotes.isNotBlank()) {
+                                append("更新说明：\n${result.releaseNotes}")
+                            }
+                        }
+                    )
+                    .setPositiveButton("下载更新") { _, _ ->
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(result.downloadUrl))
+                        startActivity(intent)
+                    }
+                    .setNegativeButton("稍后再说", null)
+                    .show()
+            } else {
+                Toast.makeText(this@MainActivity, "当前已是最新版本 v${result.currentVersion}", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 

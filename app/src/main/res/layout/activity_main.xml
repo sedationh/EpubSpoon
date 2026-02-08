@@ -16,13 +16,39 @@
         android:background="#FF222222"
         android:theme="@style/ThemeOverlay.MaterialComponents.Dark.ActionBar">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="EpubSpoon"
-            android:textColor="#FFFFFFFF"
-            android:textSize="20sp"
-            android:textStyle="bold" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="EpubSpoon"
+                android:textColor="#FFFFFFFF"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvVersion"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#99FFFFFF"
+                android:textSize="12sp"
+                android:layout_marginEnd="12dp" />
+
+            <ImageButton
+                android:id="@+id/btnCheckUpdate"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginEnd="8dp"
+                android:src="@android:drawable/stat_sys_download"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="检查更新"
+                android:tooltipText="检查更新" />
+        </LinearLayout>
     </androidx.appcompat.widget.Toolbar>
 
     <LinearLayout
