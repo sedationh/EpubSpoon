@@ -435,8 +435,9 @@ Keep this format consistent for every passage I send. No need to confirm or repe
                             append("当前版本：v${result.currentVersion}\n")
                             append("最新版本：v${result.latestVersion}\n\n")
                             if (result.releaseNotes.isNotBlank()) {
-                                append("更新说明：\n${result.releaseNotes}")
+                                append("更新说明：\n${result.releaseNotes}\n\n")
                             }
+                            append("⚠️ 如安装时提示「签名不一致」，请先卸载旧版本再安装。\n（阅读进度不会丢失）")
                         }
                     )
                     .setPositiveButton("下载更新") { _, _ ->

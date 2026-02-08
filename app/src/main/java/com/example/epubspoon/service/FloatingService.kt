@@ -11,7 +11,9 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.graphics.PixelFormat
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.util.Log
@@ -175,11 +177,19 @@ class FloatingService : Service() {
         val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
         clipboard.setPrimaryClip(ClipData.newPlainText("EpubSpoon", text))
 
-        // 2. 震动反馈
+        // 2. 视觉反馈：变绿 3 秒
+        floatingView.setBackgroundResource(R.drawable.floating_button_bg_green)
+        Handler(Looper.getMainLooper()).postDelayed({
+            if (::floatingView.isInitialized) {
+                floatingView.setBackgroundResource(R.drawable.floating_button_bg)
+            }
+        }, 3000)
+
+        // 3. 震动反馈
         val vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
         vibrator.vibrate(VibrationEffect.createOneShot(50, VibrationEffect.DEFAULT_AMPLITUDE))
 
-        // 3. 前进到下一段
+        // 4. 前进到下一段
         if (currentIndex < segments.size - 1) {
             currentIndex++
             storage.saveProgress(md5, currentIndex)
