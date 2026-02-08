@@ -492,20 +492,30 @@ Keep this format consistent for every passage I send. No need to confirm or repe
 
         val segments = state.bookData.segments
         val endIndex = state.currentIndex
+        val instruction = binding.etInstruction.text.toString().trim()
 
         val contextText = buildString {
+            // 母指令
+            if (instruction.isNotBlank()) {
+                append(instruction)
+                append("\n\n---\n\n")
+            }
+            // 已读段落
             for (i in 0..endIndex) {
                 append("[${i + 1}]")
                 append("\n")
                 append(segments[i])
                 if (i < endIndex) append("\n\n")
             }
+            // 标记当前进度
+            append("\n\n---\n")
+            append("以上是我目前读到的内容（第 1~${endIndex + 1} 段，共 ${segments.size} 段），请基于这些内容继续协助我。")
         }
 
         copyToClipboard(contextText)
         Toast.makeText(
             this,
-            "已复制第 1~${endIndex + 1} 段（共 ${endIndex + 1} 段）",
+            "已复制母指令 + 第 1~${endIndex + 1} 段",
             Toast.LENGTH_SHORT
         ).show()
     }
