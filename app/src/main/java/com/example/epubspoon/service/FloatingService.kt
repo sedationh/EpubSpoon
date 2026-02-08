@@ -116,8 +116,8 @@ class FloatingService : Service() {
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
             PixelFormat.TRANSLUCENT
         ).apply {
-            gravity = Gravity.TOP or Gravity.START
-            x = 100
+            gravity = Gravity.TOP or Gravity.END
+            x = 16
             y = 300
         }
 

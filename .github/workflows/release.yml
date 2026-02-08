@@ -33,6 +33,7 @@ jobs:
 
       - name: Decode debug keystore
         run: |
+          mkdir -p $HOME/.android
           echo "${{ secrets.DEBUG_KEYSTORE }}" | base64 --decode > $HOME/.android/debug.keystore
 
       - name: Build Release APK
