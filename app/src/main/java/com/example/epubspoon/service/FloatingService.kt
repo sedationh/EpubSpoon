@@ -111,6 +111,10 @@ class FloatingService : Service() {
         floatingView = LayoutInflater.from(this).inflate(R.layout.layout_floating_button, null)
         updateProgressText()
 
+        // 获取屏幕宽度，默认放右上角
+        val displayMetrics = resources.displayMetrics
+        val screenWidth = displayMetrics.widthPixels
+
         val params = WindowManager.LayoutParams(
             WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.WRAP_CONTENT,
@@ -118,8 +122,8 @@ class FloatingService : Service() {
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
             PixelFormat.TRANSLUCENT
         ).apply {
-            gravity = Gravity.TOP or Gravity.END
-            x = 16
+            gravity = Gravity.TOP or Gravity.START
+            x = screenWidth - (72 * displayMetrics.density + 16 * displayMetrics.density).toInt()
             y = 300
         }
 
@@ -143,7 +147,7 @@ class FloatingService : Service() {
                 MotionEvent.ACTION_MOVE -> {
                     val dx = event.rawX - initialTouchX
                     val dy = event.rawY - initialTouchY
-                    if (dx * dx + dy * dy > 100) { // 移动超过 10px 判定为拖拽
+                    if (dx * dx + dy * dy > 100) {
                         isDragging = true
                     }
                     params.x = initialX + dx.toInt()
