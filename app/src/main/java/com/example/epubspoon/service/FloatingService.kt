@@ -10,6 +10,7 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.graphics.PixelFormat
 import android.os.Handler
 import android.os.IBinder
@@ -37,6 +38,19 @@ class FloatingService : Service() {
     private var md5: String = ""
     private var segments: List<String> = emptyList()
     private var currentIndex: Int = 0
+
+    /**
+     * 监听 SharedPreferences 变化，Activity 侧修改进度时实时同步到悬浮窗
+     */
+    private val prefsListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+        if (key != null && md5.isNotBlank() && key == "progress_$md5") {
+            val newIndex = storage.loadProgress(md5)
+            if (newIndex != currentIndex && newIndex in segments.indices) {
+                currentIndex = newIndex
+                updateProgressText()
+            }
+        }
+    }
 
     companion object {
         private const val CHANNEL_ID = "epubspoon_floating"
@@ -98,6 +112,9 @@ class FloatingService : Service() {
         Log.d("EpubSpoon", "About to setupFloatingView, segments=${segments.size}, index=$currentIndex")
         setupFloatingView()
         Log.d("EpubSpoon", "FloatingView added to WindowManager")
+
+        // 监听进度变化（Activity 侧点击列表/搜索跳转时同步）
+        storage.registerChangeListener(prefsListener)
 
         return START_NOT_STICKY
     }
@@ -222,6 +239,7 @@ class FloatingService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
+        storage.unregisterChangeListener(prefsListener)
         if (::floatingView.isInitialized) {
             try { windowManager.removeView(floatingView) } catch (_: Exception) {}
         }

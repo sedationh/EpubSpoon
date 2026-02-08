@@ -160,10 +160,6 @@ Keep this format consistent for every passage I send. No need to confirm or repe
     private fun setupRecyclerView() {
         segmentAdapter = SegmentAdapter { index ->
             viewModel.selectSegment(index)
-            // 如果悬浮窗正在运行，重启以同步进度
-            if (floatingServiceRunning) {
-                restartFloatingService()
-            }
         }
         binding.rvSegments.apply {
             layoutManager = LinearLayoutManager(this@MainActivity)
@@ -184,7 +180,6 @@ Keep this format consistent for every passage I send. No need to confirm or repe
             val targetIndex = (asNumber - 1).coerceIn(0, state.bookData.segments.size - 1)
             viewModel.selectSegment(targetIndex)
             binding.rvSegments.scrollToPosition(targetIndex)
-            if (floatingServiceRunning) restartFloatingService()
             Toast.makeText(this, "已跳转到第 ${targetIndex + 1} 段", Toast.LENGTH_SHORT).show()
             return
         }
@@ -197,7 +192,6 @@ Keep this format consistent for every passage I send. No need to confirm or repe
             if (segments[idx].contains(query, ignoreCase = true)) {
                 viewModel.selectSegment(idx)
                 binding.rvSegments.scrollToPosition(idx)
-                if (floatingServiceRunning) restartFloatingService()
                 Toast.makeText(this, "找到：第 ${idx + 1} 段", Toast.LENGTH_SHORT).show()
                 return
             }
