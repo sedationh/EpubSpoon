@@ -39,6 +39,15 @@ android {
     namespace = "com.example.epubspoon"
     compileSdk = 35
 
+    signingConfigs {
+        getByName("debug") {
+            storeFile = file("${System.getProperty("user.home")}/.android/debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
+
     defaultConfig {
         applicationId = "com.example.epubspoon"
         minSdk = 26
