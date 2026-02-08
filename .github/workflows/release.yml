@@ -31,6 +31,10 @@ jobs:
         id: version
         run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
 
+      - name: Decode debug keystore
+        run: |
+          echo "${{ secrets.DEBUG_KEYSTORE }}" | base64 --decode > $HOME/.android/debug.keystore
+
       - name: Build Release APK
         run: ./gradlew assembleRelease
 
@@ -65,7 +69,7 @@ jobs:
             - Android 8.0 (API 26) 及以上
             - 需授予：悬浮窗权限、通知权限
 
-            > ⚠️ 此 APK 未签名，仅供个人测试使用。
+            > 支持从旧版本直接覆盖安装更新。
           files: |
             app/build/outputs/apk/release/EpubSpoon-${{ steps.version.outputs.VERSION }}.apk
           draft: false
