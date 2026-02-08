@@ -275,6 +275,11 @@ Keep this format consistent for every passage I send. No need to confirm or repe
             } else false
         }
 
+        // 复制上下文（第1段到当前段，每段带序号）
+        binding.btnCopyContext.setOnClickListener {
+            copyContextSegments()
+        }
+
         // 启动悬浮窗
         binding.btnStartFloat.setOnClickListener {
             checkAndStartFloatingService()
@@ -452,6 +457,30 @@ Keep this format consistent for every passage I send. No need to confirm or repe
                 Toast.makeText(this@MainActivity, "当前已是最新版本 v${result.currentVersion}", Toast.LENGTH_SHORT).show()
             }
         }
+    }
+
+    private fun copyContextSegments() {
+        val state = viewModel.uiState.value
+        if (state !is UiState.Success) return
+
+        val segments = state.bookData.segments
+        val endIndex = state.currentIndex
+
+        val contextText = buildString {
+            for (i in 0..endIndex) {
+                append("[${i + 1}]")
+                append("\n")
+                append(segments[i])
+                if (i < endIndex) append("\n\n")
+            }
+        }
+
+        copyToClipboard(contextText)
+        Toast.makeText(
+            this,
+            "已复制第 1~${endIndex + 1} 段（共 ${endIndex + 1} 段）",
+            Toast.LENGTH_SHORT
+        ).show()
     }
 
     private fun copyToClipboard(text: String) {

@@ -170,8 +170,8 @@ class FloatingService : Service() {
             return
         }
 
-        // 1. 复制当前段到剪贴板
-        val text = segments[currentIndex]
+        // 1. 复制当前段到剪贴板（带序号）
+        val text = "[${currentIndex + 1}]\n${segments[currentIndex]}"
         val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
         clipboard.setPrimaryClip(ClipData.newPlainText("EpubSpoon", text))
 

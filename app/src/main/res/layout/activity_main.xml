@@ -137,6 +137,14 @@
             android:layout_height="wrap_content"
             android:text="搜索"
             android:minWidth="48dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnCopyContext"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="上下文"
+            android:minWidth="48dp" />
     </LinearLayout>
 
     <!-- Loading -->
