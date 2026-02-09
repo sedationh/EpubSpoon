@@ -140,65 +140,6 @@
         android:layout_gravity="center"
         android:visibility="gone" />
 
-    <!-- 母指令区域 -->
-    <com.google.android.material.card.MaterialCardView
-        android:id="@+id/cardInstruction"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:visibility="gone">
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="12dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical">
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="母指令 (System Instruction)"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
-
-                <ImageButton
-                    android:id="@+id/btnToggleInstruction"
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
-                    android:src="@android:drawable/arrow_down_float"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="展开/折叠" />
-            </LinearLayout>
-
-            <EditText
-                android:id="@+id/etInstruction"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:textSize="12sp"
-                android:fontFamily="monospace"
-                android:minLines="3"
-                android:maxLines="12"
-                android:visibility="gone"
-                android:inputType="textMultiLine" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnCopyInstruction"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="复制母指令" />
-        </LinearLayout>
-    </com.google.android.material.card.MaterialCardView>
-
     <!-- 搜索/跳转栏 -->
     <LinearLayout
         android:id="@+id/searchBar"

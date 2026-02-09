@@ -40,56 +40,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var segmentAdapter: SegmentAdapter
     private lateinit var storage: StorageManager
 
-    private var instructionExpanded = false
     private var floatingServiceRunning = false
-
-    private val defaultInstruction = """
-You are my English reading assistant and cultural guide. I will send you passages from an English book one at a time. I am reading this book for the first time.
-
-⚠️ **Critical rules:**
-- **NEVER spoil future plot, character fates, twists, or outcomes** — even indirectly. Do not hint at what will happen later.
-- **NEVER say things like** "this will be important later", "foreshadowing", "ironic given what happens next", or anything that reveals future events.
-- Only explain what is **in this passage and before it**. Treat every passage as if you don't know what comes after.
-- Your goal is to **enhance my reading experience** — help me fully understand what the author is expressing **right now**, without ruining the joy of discovery.
-
-For each passage, please go through it **sentence by sentence** in order. For each sentence, provide:
-
-1. **English original** — the sentence as-is.
-2. **Chinese translation** — natural, fluent Chinese translation.
-3. **Inline notes** — right after the translation, annotate as needed:
-   - **word/phrase** — Chinese meaning；usage note or nuance if helpful.
-   - If a sentence involves **cultural references, historical allusions, religious/mythological context, social customs, literary devices, or implied meanings** that a Chinese reader might not immediately grasp, add a 💡 note explaining the cultural/contextual background in Chinese. Focus on enriching understanding — explain what the author is conveying, the emotional undertone, rhetorical techniques, or real-world context that helps me appreciate the writing.
-   - Not every sentence needs a 💡 note — only add when there's genuine cultural or contextual depth worth explaining.
-
-After all sentences are done, add:
-
-## Summary
-Summarize the main idea of this passage in 2-3 sentences in Chinese.
-
----
-
-### Example output format:
-
-**① He felt like a modern-day Sisyphus, endlessly pushing the boulder uphill.**
-他觉得自己像一个现代的西西弗斯，永无止境地把巨石推上山坡。
-- **Sisyphus** — 西西弗斯；希腊神话人物
-- **boulder** — 巨石，大圆石
-- 💡 西西弗斯是希腊神话中被宙斯惩罚的人物，必须永远将巨石推上山顶，但每次快到顶时巨石就会滚落。后来常用来比喻徒劳无功、永无尽头的努力。法国哲学家加缪在《西西弗斯的神话》中将其重新解读为荒诞英雄。
-
-**② "Well, that's just not cricket," she muttered under her breath.**
-"好吧，这太不像话了，"她小声嘟囔道。
-- **not cricket** — 不公平的，不正当的；英式口语
-- **mutter under one's breath** — 低声嘟囔，小声抱怨
-- 💡 "not cricket" 是一个英国特有的表达，源自板球运动（cricket）中对公平竞赛精神的强调。在英国文化中，板球被视为"绅士运动"，违反其精神就意味着不光彩、不公正。这个表达在美式英语中几乎不用。
-
-**③ She raised an eyebrow, unimpressed.**
-她挑了挑眉，并不为所动。
-- **raise an eyebrow** — 挑眉；表示怀疑或不以为然
-- **unimpressed** — 不为所动的，没有被打动的
-
----
-Keep this format consistent for every passage I send. No need to confirm or repeat instructions. Just wait for my first passage.
-    """.trimIndent()
 
     // 文件选择器
     private val openDocumentLauncher = registerForActivityResult(
@@ -243,19 +194,6 @@ Keep this format consistent for every passage I send. No need to confirm or repe
             binding.searchBar.visibility = if (visible) View.GONE else View.VISIBLE
         }
 
-        // 展开/折叠母指令
-        binding.btnToggleInstruction.setOnClickListener {
-            instructionExpanded = !instructionExpanded
-            binding.etInstruction.visibility = if (instructionExpanded) View.VISIBLE else View.GONE
-        }
-
-        // 复制母指令
-        binding.btnCopyInstruction.setOnClickListener {
-            val text = binding.etInstruction.text.toString().ifBlank { defaultInstruction }
-            copyToClipboard(text)
-            Toast.makeText(this, "已复制母指令", Toast.LENGTH_SHORT).show()
-        }
-
         // 搜索/跳转
         binding.etSearch.setOnClickListener {
             binding.etSearch.isFocusable = true
@@ -305,7 +243,6 @@ Keep this format consistent for every passage I send. No need to confirm or repe
         binding.bookEmptyArea.visibility = View.VISIBLE
         binding.bookInfoArea.visibility = View.GONE
         binding.progressBar.visibility = View.GONE
-        binding.cardInstruction.visibility = View.GONE
         binding.searchBar.visibility = View.GONE
         binding.rvSegments.visibility = View.GONE
         binding.btnStartFloat.visibility = View.GONE
@@ -316,7 +253,6 @@ Keep this format consistent for every passage I send. No need to confirm or repe
         binding.bookEmptyArea.visibility = View.GONE
         binding.bookInfoArea.visibility = View.GONE
         binding.progressBar.visibility = View.VISIBLE
-        binding.cardInstruction.visibility = View.GONE
         binding.searchBar.visibility = View.GONE
         binding.rvSegments.visibility = View.GONE
         binding.btnStartFloat.visibility = View.GONE
@@ -327,18 +263,12 @@ Keep this format consistent for every passage I send. No need to confirm or repe
         binding.bookEmptyArea.visibility = View.GONE
         binding.progressBar.visibility = View.GONE
         binding.bookInfoArea.visibility = View.VISIBLE
-        binding.cardInstruction.visibility = View.VISIBLE
         // searchBar 默认隐藏，用户点"搜索"按钮展开
         binding.rvSegments.visibility = View.VISIBLE
         binding.btnStopFloat.visibility = View.VISIBLE
 
         binding.tvBookTitle.text = state.bookData.bookTitle
         binding.tvProgress.text = "${state.currentIndex + 1}/${state.bookData.segments.size}"
-
-        // 预填母指令
-        if (binding.etInstruction.text.isNullOrBlank()) {
-            binding.etInstruction.setText(defaultInstruction)
-        }
 
         segmentAdapter.updateData(state.bookData.segments, state.currentIndex)
 
@@ -359,7 +289,6 @@ Keep this format consistent for every passage I send. No need to confirm or repe
         binding.bookEmptyArea.visibility = View.VISIBLE
         binding.bookInfoArea.visibility = View.GONE
         binding.progressBar.visibility = View.GONE
-        binding.cardInstruction.visibility = View.GONE
         binding.searchBar.visibility = View.GONE
         binding.rvSegments.visibility = View.GONE
         binding.btnStartFloat.visibility = View.GONE
@@ -486,14 +415,8 @@ Keep this format consistent for every passage I send. No need to confirm or repe
 
         val segments = state.bookData.segments
         val endIndex = state.currentIndex
-        val instruction = binding.etInstruction.text.toString().trim()
 
         val contextText = buildString {
-            // 母指令
-            if (instruction.isNotBlank()) {
-                append(instruction)
-                append("\n\n---\n\n")
-            }
             // 已读段落
             for (i in 0..endIndex) {
                 append("[${i + 1}]")
@@ -509,7 +432,7 @@ Keep this format consistent for every passage I send. No need to confirm or repe
         copyToClipboard(contextText)
         Toast.makeText(
             this,
-            "已复制母指令 + 第 1~${endIndex + 1} 段",
+            "已复制第 1~${endIndex + 1} 段",
             Toast.LENGTH_SHORT
         ).show()
     }
