@@ -198,3 +198,31 @@
 
 **产出文件：**
 - 修改已有文件，无新文件
+
+---
+
+## Task 9: 按章节复制功能
+
+**状态：** ✅ 已完成
+**依赖：** Task 1-8
+
+**目标：** 在主界面增加「章节」Tab，支持按整章复制内容，适用于长文不需要分段复制的场景。
+
+**具体内容：**
+- 新增 **TabLayout**（分段 / 章节 两个 Tab）切换两种浏览模式
+- **分段 Tab**（原有功能）：小段列表 + 悬浮窗逐段复制，适合短内容逐段喂给 AI
+- **章节 Tab**（新功能）：展示 EPUB 原始章节列表，每项显示章节序号、内容预览（前 120 字）、约词数
+  - 点击或点「复制」按钮 → 整章复制到剪贴板
+  - 复制后绿色高亮 3 秒反馈
+  - 章节模式下隐藏悬浮窗按钮、搜索栏、详细/省略等分段专属控件
+- `BookData` 新增 `chapters: List<String>?` 字段，存储 EpubParser 解析出的原始章节文本
+  - 使用 nullable 类型兼容旧版缓存（Gson 反序列化不走 Kotlin 默认值）
+- 新增 `ChapterAdapter` + `item_chapter.xml` 布局
+
+**产出文件：**
+- `app/src/main/java/com/example/epubspoon/ui/ChapterAdapter.kt`（新增）
+- `app/src/main/res/layout/item_chapter.xml`（新增）
+- `app/src/main/res/layout/activity_main.xml`（修改：加 TabLayout + rvChapters）
+- `app/src/main/java/com/example/epubspoon/model/BookData.kt`（修改：加 chapters 字段）
+- `app/src/main/java/com/example/epubspoon/viewmodel/MainViewModel.kt`（修改：解析时保存 chapters）
+- `app/src/main/java/com/example/epubspoon/ui/MainActivity.kt`（修改：Tab 切换 + 章节复制逻辑）

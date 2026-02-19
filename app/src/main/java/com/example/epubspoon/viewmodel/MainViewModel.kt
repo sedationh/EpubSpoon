@@ -86,7 +86,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
                         BookData(
                             bookTitle = parseResult.title,
-                            segments = segments
+                            segments = segments,
+                            chapters = parseResult.chapterTexts
                         )
                     } ?: throw Exception("无法读取文件")
                 }

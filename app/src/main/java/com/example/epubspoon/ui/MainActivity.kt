@@ -31,6 +31,7 @@ import com.example.epubspoon.storage.StorageManager
 import com.example.epubspoon.updater.UpdateChecker
 import com.example.epubspoon.viewmodel.MainViewModel
 import com.example.epubspoon.viewmodel.UiState
+import com.google.android.material.tabs.TabLayout
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
@@ -38,9 +39,12 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private val viewModel: MainViewModel by viewModels()
     private lateinit var segmentAdapter: SegmentAdapter
+    private lateinit var chapterAdapter: ChapterAdapter
     private lateinit var storage: StorageManager
 
     private var floatingServiceRunning = false
+    /** 当前选中的 Tab：0=分段，1=章节 */
+    private var currentTab = 0
 
     // 文件选择器
     private val openDocumentLauncher = registerForActivityResult(
@@ -116,6 +120,79 @@ class MainActivity : AppCompatActivity() {
             layoutManager = LinearLayoutManager(this@MainActivity)
             adapter = segmentAdapter
         }
+
+        chapterAdapter = ChapterAdapter { index, text ->
+            copyChapterToClipboard(index, text)
+        }
+        binding.rvChapters.apply {
+            layoutManager = LinearLayoutManager(this@MainActivity)
+            adapter = chapterAdapter
+        }
+
+        // 设置 Tab
+        setupTabLayout()
+    }
+
+    private fun setupTabLayout() {
+        binding.tabLayout.addTab(binding.tabLayout.newTab().setText("分段"))
+        binding.tabLayout.addTab(binding.tabLayout.newTab().setText("章节"))
+
+        binding.tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
+            override fun onTabSelected(tab: TabLayout.Tab) {
+                currentTab = tab.position
+                switchTab(tab.position)
+            }
+            override fun onTabUnselected(tab: TabLayout.Tab) {}
+            override fun onTabReselected(tab: TabLayout.Tab) {}
+        })
+    }
+
+    /**
+     * 切换分段/章节 Tab
+     */
+    private fun switchTab(tabIndex: Int) {
+        val state = viewModel.uiState.value
+        if (state !is UiState.Success) return
+
+        when (tabIndex) {
+            0 -> {
+                // 分段 Tab
+                binding.rvSegments.visibility = View.VISIBLE
+                binding.rvChapters.visibility = View.GONE
+                binding.btnStartFloat.visibility = if (floatingServiceRunning) View.GONE else View.VISIBLE
+                binding.btnStopFloat.visibility = if (floatingServiceRunning) View.VISIBLE else View.GONE
+                // 搜索栏和详细按钮在分段模式下可用
+                binding.btnToggleDetail.visibility = View.VISIBLE
+                binding.btnToggleSearch.visibility = View.VISIBLE
+                binding.tvProgress.text = "${state.currentIndex + 1}/${state.bookData.segments.size}"
+            }
+            1 -> {
+                // 章节 Tab
+                binding.rvSegments.visibility = View.GONE
+                binding.rvChapters.visibility = View.VISIBLE
+                binding.btnStartFloat.visibility = View.GONE
+                binding.btnStopFloat.visibility = View.GONE
+                binding.searchBar.visibility = View.GONE
+                // 章节模式下隐藏分段相关按钮
+                binding.btnToggleDetail.visibility = View.GONE
+                binding.btnToggleSearch.visibility = View.GONE
+                binding.tvProgress.text = "${state.bookData.chapters.orEmpty().size} 章"
+            }
+        }
+    }
+
+    /**
+     * 复制章节到剪贴板，并显示反馈
+     */
+    private fun copyChapterToClipboard(index: Int, text: String) {
+        copyToClipboard(text)
+        chapterAdapter.setCopiedIndex(index)
+        Toast.makeText(this, "已复制第 ${index + 1} 章", Toast.LENGTH_SHORT).show()
+
+        // 3 秒后恢复
+        binding.rvChapters.postDelayed({
+            chapterAdapter.setCopiedIndex(-1)
+        }, 3000)
     }
 
     private fun performSearch() {
@@ -244,7 +321,9 @@ class MainActivity : AppCompatActivity() {
         binding.bookInfoArea.visibility = View.GONE
         binding.progressBar.visibility = View.GONE
         binding.searchBar.visibility = View.GONE
+        binding.tabLayout.visibility = View.GONE
         binding.rvSegments.visibility = View.GONE
+        binding.rvChapters.visibility = View.GONE
         binding.btnStartFloat.visibility = View.GONE
         binding.btnStopFloat.visibility = View.GONE
     }
@@ -254,7 +333,9 @@ class MainActivity : AppCompatActivity() {
         binding.bookInfoArea.visibility = View.GONE
         binding.progressBar.visibility = View.VISIBLE
         binding.searchBar.visibility = View.GONE
+        binding.tabLayout.visibility = View.GONE
         binding.rvSegments.visibility = View.GONE
+        binding.rvChapters.visibility = View.GONE
         binding.btnStartFloat.visibility = View.GONE
         binding.btnStopFloat.visibility = View.GONE
     }
@@ -264,24 +345,22 @@ class MainActivity : AppCompatActivity() {
         binding.progressBar.visibility = View.GONE
         binding.bookInfoArea.visibility = View.VISIBLE
         // searchBar 默认隐藏，用户点"搜索"按钮展开
-        binding.rvSegments.visibility = View.VISIBLE
-        binding.btnStopFloat.visibility = View.VISIBLE
+        binding.tabLayout.visibility = View.VISIBLE
 
         binding.tvBookTitle.text = state.bookData.bookTitle
-        binding.tvProgress.text = "${state.currentIndex + 1}/${state.bookData.segments.size}"
 
+        // 更新分段数据
         segmentAdapter.updateData(state.bookData.segments, state.currentIndex)
 
-        // 自动滚动到当前段
-        binding.rvSegments.scrollToPosition(state.currentIndex)
+        // 更新章节数据（旧缓存可能无 chapters 字段）
+        chapterAdapter.updateData(state.bookData.chapters.orEmpty())
 
-        // 显示启动/关闭悬浮窗按钮
-        if (floatingServiceRunning) {
-            binding.btnStartFloat.visibility = View.GONE
-            binding.btnStopFloat.visibility = View.VISIBLE
-        } else {
-            binding.btnStartFloat.visibility = View.VISIBLE
-            binding.btnStopFloat.visibility = View.GONE
+        // 根据当前 Tab 切换显示
+        switchTab(currentTab)
+
+        // 分段模式下自动滚动到当前段
+        if (currentTab == 0) {
+            binding.rvSegments.scrollToPosition(state.currentIndex)
         }
     }
 
@@ -290,7 +369,9 @@ class MainActivity : AppCompatActivity() {
         binding.bookInfoArea.visibility = View.GONE
         binding.progressBar.visibility = View.GONE
         binding.searchBar.visibility = View.GONE
+        binding.tabLayout.visibility = View.GONE
         binding.rvSegments.visibility = View.GONE
+        binding.rvChapters.visibility = View.GONE
         binding.btnStartFloat.visibility = View.GONE
         binding.btnStopFloat.visibility = View.GONE
         Toast.makeText(this, message, Toast.LENGTH_LONG).show()
